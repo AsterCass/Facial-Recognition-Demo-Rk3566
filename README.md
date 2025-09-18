@@ -10,4 +10,4 @@ SDK也是使用泰山派的，但是本质上大同小异，确定基础GCC版�
 ### 编译
 
 修改`toolchain.cmake`相关内容，
-执行`mkdir build && cd build && cmake -DCMAKE_TOOLCHAIN_FILE=../toolchain.cmake .. && cmake --build . -j $(nproc)`
+执行`mkdir build && cd build && cmake -DCMAKE_TOOLCHAIN_FILE=../toolchain.cmake .. && make -j$(nproc)`

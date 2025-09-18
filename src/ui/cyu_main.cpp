@@ -3,7 +3,7 @@
 #include <QTimer>
 #include <gst/video/videooverlay.h>
 
-VideoWindow::VideoWindow(QWidget *parent) : QWidget(parent) {
+CyuMain::CyuMain(QWidget *parent) : QWidget(parent) {
     setWindowTitle("RK3566 Camera Demo");
     resize(800, 600);
 
@@ -18,14 +18,14 @@ VideoWindow::VideoWindow(QWidget *parent) : QWidget(parent) {
     initGstPipeline();
 }
 
-VideoWindow::~VideoWindow() {
+CyuMain::~CyuMain() {
     if (pipeline) {
         gst_element_set_state(pipeline, GST_STATE_NULL);
         gst_object_unref(pipeline);
     }
 }
 
-void VideoWindow::initGstPipeline() {
+void CyuMain::initGstPipeline() {
     // 构建 pipeline: v4l2src → videoconvert → tee → (qtvideosink, appsink)
     pipeline = gst_parse_launch(
         "v4l2src device=/dev/video0 ! videoconvert ! tee name=t "
@@ -41,7 +41,7 @@ void VideoWindow::initGstPipeline() {
     // 获取 appsink
     appsink = gst_bin_get_by_name(GST_BIN(pipeline), "appsink");
     if (appsink) {
-        g_signal_connect(appsink, "new-sample", G_CALLBACK(VideoWindow::onNewSample), this);
+        g_signal_connect(appsink, "new-sample", G_CALLBACK(CyuMain::onNewSample), this);
     }
 
     // 绑定 qtvideosink 到 Qt 窗口
@@ -56,8 +56,8 @@ void VideoWindow::initGstPipeline() {
     gst_element_set_state(pipeline, GST_STATE_PLAYING);
 }
 
-GstFlowReturn VideoWindow::onNewSample(GstAppSink *appsink, gpointer user_data) {
-    VideoWindow *self = static_cast<VideoWindow *>(user_data);
+GstFlowReturn CyuMain::onNewSample(GstAppSink *appsink, gpointer user_data) {
+    CyuMain *self = static_cast<CyuMain *>(user_data);
 
     GstSample *sample = gst_app_sink_pull_sample(appsink);
     if (sample) {

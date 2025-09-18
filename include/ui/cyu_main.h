@@ -5,13 +5,13 @@
 #include <gst/gst.h>
 #include <gst/app/gstappsink.h>
 
-class VideoWindow : public QWidget
+class CyuMain : public QWidget
 {
     Q_OBJECT
 
 public:
-    VideoWindow(QWidget *parent = nullptr);
-    ~VideoWindow();
+    CyuMain(QWidget *parent = nullptr);
+    ~CyuMain();
 
 private:
     void initGstPipeline();

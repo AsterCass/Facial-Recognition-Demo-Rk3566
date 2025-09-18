@@ -1,11 +1,10 @@
 #include <QApplication>
 #include "ui/cyu_main.h"
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
 
-    VideoWindow window;
+    CyuMain window;
     window.show();
 
     return app.exec();
