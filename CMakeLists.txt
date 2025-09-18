@@ -25,7 +25,7 @@ endif ()
 
 add_executable(${PROJECT_NAME}
         src/main.cpp
-        src/ui/cyu_main.cpp
+        src/ui/cyu_main.cpp  include/ui/cyu_main.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
