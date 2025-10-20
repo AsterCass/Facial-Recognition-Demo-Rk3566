@@ -8,7 +8,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
 
-set(ROCKIT_ROOT 3rdparty/rockit)
+set(ROCKIT_ROOT ${CMAKE_SOURCE_DIR}/3rdparty/rockit)
 
 if (WIN32)
     find_package(Qt5 REQUIRED COMPONENTS Core Widgets)
@@ -19,6 +19,10 @@ elseif (UNIX)
 else ()
     message(FATAL_ERROR "Unsupported operating system")
 endif ()
+
+link_directories(
+        ${ROCKIT_ROOT}/lib
+)
 
 add_executable(${PROJECT_NAME}
         src/main.cpp
@@ -40,7 +44,7 @@ elseif (UNIX)
     target_link_libraries(${PROJECT_NAME} PRIVATE
             Qt5::Core
             Qt5::Widgets
-            ${ROCKIT_ROOT}/lib/librockit.so
+            rockit
     )
 else ()
     message(FATAL_ERROR "Unsupported operating system")
