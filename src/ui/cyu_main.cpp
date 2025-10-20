@@ -1,72 +1,99 @@
 #include "ui/cyu_main.h"
 #include <QDebug>
 #include <QTimer>
-#include <gst/video/videooverlay.h>
+#include "rk_mpi_vi.h"
+#include "rk_mpi_vpss.h"
+#include "rk_mpi_vo.h"
+#include "rk_mpi_sys.h"
+#include "rk_mpi_mb.h"
+#include "rk_comm_video.h"
+
+#define VI_DEV_ID       0
+#define VI_CHN_ID       0
+#define VPSS_GRP_ID     0
+#define VPSS_CHN_ID     0
+#define VO_DEV_ID       0
+#define VO_CHN_ID       0
+
+#define CAM_WIDTH       1920
+#define CAM_HEIGHT      1080
+#define DISP_WIDTH      1920
+#define DISP_HEIGHT     1080
+#define FRAME_RATE      30
+
+int init_vi() {
+    VI_DEV_ATTR_S dev_attr;
+    VI_CHN_ATTR_S chn_attr;
+
+    memset(&dev_attr, 0, sizeof(VI_DEV_ATTR_S));
+
+    if (RK_MPI_VI_SetDevAttr(VI_DEV_ID, &dev_attr) != RK_SUCCESS) {
+        printf("VI SetDevAttr failed\n");
+        return -1;
+    }
+
+    printf("VI SetDevAttr success\n");
+
+    if (RK_MPI_VI_EnableDev(VI_DEV_ID) != RK_SUCCESS) {
+        printf("VI EnableDev failed\n");
+        return -1;
+    }
+
+    printf("VI EnableDev success\n");
+
+    memset(&chn_attr, 0, sizeof(VI_CHN_ATTR_S));
+    chn_attr.stSize.u32Width = CAM_WIDTH;
+    chn_attr.stSize.u32Height = CAM_HEIGHT;
+    chn_attr.enPixelFormat = RK_FMT_YUV420SP;
+    chn_attr.u32Depth = 1;
+    chn_attr.enCompressMode = COMPRESS_MODE_NONE;
+
+    if (RK_MPI_VI_SetChnAttr(VI_DEV_ID, VI_CHN_ID, &chn_attr) != RK_SUCCESS) {
+        printf("VI SetChnAttr failed\n");
+        return -1;
+    }
+
+    printf("VI SetChnAttr success\n");
+
+    if (RK_MPI_VI_EnableChn(VI_DEV_ID, VI_CHN_ID) != RK_SUCCESS) {
+        printf("VI EnableChn failed\n");
+        return -1;
+    }
+
+    printf("VI EnableChn success\n");
+
+    return 0;
+}
 
 CyuMain::CyuMain(QWidget *parent) : QWidget(parent) {
     setWindowTitle("RK3566 Camera Demo");
     resize(800, 600);
 
-
     overlayLabel = new QLabel("Home", this);
-    overlayLabel->setStyleSheet("QLabel { color: yellow; font-size: 32px; font-weight: bold; }");
+    overlayLabel->setStyleSheet("QLabel { color: blue; font-size: 32px; font-weight: bold; }");
     overlayLabel->setAttribute(Qt::WA_TranslucentBackground);
     overlayLabel->move(20, 20);
 
-    // 初始化 GStreamer
-    gst_init(nullptr, nullptr);
-    initGstPipeline();
-}
 
-CyuMain::~CyuMain() {
-    if (pipeline) {
-        gst_element_set_state(pipeline, GST_STATE_NULL);
-        gst_object_unref(pipeline);
-    }
-}
+    printf("Start ... \n");
 
-void CyuMain::initGstPipeline() {
-    // 构建 pipeline: v4l2src → videoconvert → tee → (qtvideosink, appsink)
-    pipeline = gst_parse_launch(
-        "v4l2src device=/dev/video0 ! videoconvert ! tee name=t "
-        "t. ! queue ! waylandsink name=qtvideosink "
-        "t. ! queue ! appsink name=appsink emit-signals=true sync=false",
-        nullptr);
-
-    if (!pipeline) {
-        qWarning() << "Failed to create GStreamer pipeline";
+    if (RK_MPI_SYS_Init() != RK_SUCCESS) {
+        printf("SYS Init failed\n");
         return;
     }
 
-    // 获取 appsink
-    appsink = gst_bin_get_by_name(GST_BIN(pipeline), "appsink");
-    if (appsink) {
-        g_signal_connect(appsink, "new-sample", G_CALLBACK(CyuMain::onNewSample), this);
+    printf("SYS Init success\n");
+
+    // 初始化VI
+    if (init_vi() != 0) {
+        printf("Init VI failed\n");
+        return;
     }
 
-    // 绑定 qtvideosink 到 Qt 窗口
-    GstElement *qtvideosink = gst_bin_get_by_name(GST_BIN(pipeline), "qtvideosink");
-    if (qtvideosink) {
-        WId winId = this->winId();
-        gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(qtvideosink), (guintptr) winId);
-        gst_object_unref(qtvideosink);
-    }
+    printf("Init VI success\n");
 
-    // 启动 pipeline
-    gst_element_set_state(pipeline, GST_STATE_PLAYING);
+
 }
 
-GstFlowReturn CyuMain::onNewSample(GstAppSink *appsink, gpointer user_data) {
-    CyuMain *self = static_cast<CyuMain *>(user_data);
-
-    GstSample *sample = gst_app_sink_pull_sample(appsink);
-    if (sample) {
-        GstBuffer *buffer = gst_sample_get_buffer(sample);
-        if (buffer) {
-            qDebug() << "Got frame with size:" << gst_buffer_get_size(buffer);
-        }
-        gst_sample_unref(sample);
-    }
-
-    return GST_FLOW_OK;
+CyuMain::~CyuMain() {
 }
