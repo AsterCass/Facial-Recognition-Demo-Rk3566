@@ -1,6 +1,10 @@
 #include "ui/cyu_main.h"
 #include <QDebug>
 #include <QTimer>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <signal.h>
 #include "rk_mpi_vi.h"
 #include "rk_mpi_vpss.h"
 #include "rk_mpi_vo.h"
@@ -20,6 +24,12 @@
 #define DISP_WIDTH      1920
 #define DISP_HEIGHT     1080
 #define FRAME_RATE      30
+
+static int g_exit = 0;
+
+void signal_handler(int sig) {
+    g_exit = 1;
+}
 
 int init_vi() {
     VI_DEV_ATTR_S dev_attr;
@@ -77,6 +87,15 @@ CyuMain::CyuMain(QWidget *parent) : QWidget(parent) {
 
     printf("Start ... \n");
 
+    VIDEO_FRAME_INFO_S frame;
+    int ret;
+    int frame_count = 0;
+
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
+
+    printf("RK3566 Rockit Demo Starting...\n");
+
     if (RK_MPI_SYS_Init() != RK_SUCCESS) {
         printf("SYS Init failed\n");
         return;
@@ -91,6 +110,26 @@ CyuMain::CyuMain(QWidget *parent) : QWidget(parent) {
     }
 
     printf("Init VI success\n");
+
+    while (!g_exit) {
+        printf("Start get frame\n");
+
+        ret = RK_MPI_VI_GetChnFrame(VI_DEV_ID, VI_CHN_ID, &frame, -1);
+        if (ret != RK_SUCCESS) {
+            printf("Get frame failed: %d\n", ret);
+            usleep(100000);
+            continue;
+        }
+
+        printf("Get frame success\n");
+        printf("%d - %d", frame.stVFrame.u32Height, frame.stVFrame.u32Width);
+
+
+        RK_MPI_VI_ReleaseChnFrame(VI_DEV_ID, VI_CHN_ID, &frame);
+        usleep(100000);
+    }
+
+
 
 
 }
