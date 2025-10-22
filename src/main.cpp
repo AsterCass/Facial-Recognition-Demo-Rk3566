@@ -84,8 +84,13 @@ int vo_init(int channelId, int width, int height) {
     int ret;
 
     VO_PUB_ATTR_S voat = {0};
+
+    ret = RK_MPI_VO_GetPubAttr(0, &voat);
+
+    printf("RK_MPI_VO_GetPubAttr ret =  %d\n", ret);
+
     voat.enIntfType = VO_INTF_MIPI;
-    voat.enIntfSync = VO_OUTPUT_1080P60;
+    voat.enIntfSync = VO_OUTPUT_1080P30;
     ret = RK_MPI_VO_SetPubAttr(0, &voat);
 
     printf("RK_MPI_VO_SetPubAttr ret =  %d\n", ret);
