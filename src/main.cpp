@@ -80,6 +80,57 @@ int vi_chn_init(int channelId, int width, int height) {
 }
 
 
+int vo_init(int channelId, int width, int height) {
+    int ret;
+
+    VO_PUB_ATTR_S voat = {0};
+    voat.enIntfType = VO_INTF_MIPI;
+    voat.enIntfSync = VO_OUTPUT_1080P60;
+    ret = RK_MPI_VO_SetPubAttr(0, &voat);
+
+    printf("RK_MPI_VO_SetPubAttr ret =  %d\n", ret);
+
+    ret = RK_MPI_VO_Enable(0);
+
+    printf("RK_MPI_VO_Enable ret = %d\n", ret);
+
+    ret = RK_MPI_VO_BindLayer(0, 0, VO_LAYER_MODE_VIDEO);
+
+    printf("RK_MPI_VO_BindLayer ret =  %d\n", ret);
+
+    VO_VIDEO_LAYER_ATTR_S volat = {};
+    volat.enCompressMode = COMPRESS_MODE_NONE;
+    volat.enPixFormat = RK_FMT_YUV420SP;
+    volat.u32DispFrmRt = 30;
+    volat.stDispRect.u32Width = width;
+    volat.stDispRect.u32Height = height;
+    volat.stImageSize.u32Width = width;
+    volat.stImageSize.u32Height = height;;
+    volat.bBypassFrame = RK_TRUE;
+    ret = RK_MPI_VO_SetLayerAttr(0, &volat);
+
+    printf("RK_MPI_VO_SetLayerAttr ret =  %d\n", ret);
+
+    ret = RK_MPI_VO_EnableLayer(0);
+
+    printf("RK_MPI_VO_EnableLayer ret =  %d\n", ret);
+
+
+    VO_CHN_ATTR_S vocat = {0};
+    vocat.stRect.u32Width = width;
+    vocat.stRect.u32Height = height;
+
+    ret =RK_MPI_VO_SetChnAttr(0, channelId, &vocat);
+
+    printf("RK_MPI_VO_SetChnAttr ret =  %d\n", ret);
+
+    ret = RK_MPI_VO_EnableChn(0, channelId);
+
+    printf("RK_MPI_VO_EnableChn ret =  %d\n", ret);
+
+    return ret;
+}
+
 int main(int argc, char *argv[]) {
     VIDEO_FRAME_INFO_S frame;
     int ret;
@@ -96,6 +147,9 @@ int main(int argc, char *argv[]) {
 
     RK_LOGI("chn init finish");
 
+    vo_init(VI_CHN_ID, 1920, 1080);
+
+    RK_LOGI("vo init finish");
 
     while (true) {
         RK_LOGI("get frame");
@@ -107,7 +161,7 @@ int main(int argc, char *argv[]) {
         }
 
         printf("Get frame success\n");
-        printf("%d - %d", frame.stVFrame.u32Height, frame.stVFrame.u32Width);
+        printf("%d - %d\n", frame.stVFrame.u32Height, frame.stVFrame.u32Width);
 
 
         RK_MPI_VI_ReleaseChnFrame(VI_DEV_ID, VI_CHN_ID, &frame);
