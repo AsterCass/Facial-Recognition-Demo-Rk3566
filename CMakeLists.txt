@@ -11,11 +11,11 @@ set(CMAKE_AUTORCC ON)
 set(ROCKIT_ROOT ${CMAKE_SOURCE_DIR}/3rdparty/rockit)
 
 if (WIN32)
-    find_package(Qt5 REQUIRED COMPONENTS Core Widgets)
+    #    find_package(Qt5 REQUIRED COMPONENTS Core Widgets)
 
 elseif (UNIX)
     find_package(PkgConfig REQUIRED)
-    find_package(Qt5 REQUIRED COMPONENTS Core Widgets)
+    #    find_package(Qt5 REQUIRED COMPONENTS Core Widgets)
 else ()
     message(FATAL_ERROR "Unsupported operating system")
 endif ()
@@ -26,7 +26,7 @@ link_directories(
 
 add_executable(${PROJECT_NAME}
         src/main.cpp
-        src/ui/cyu_main.cpp  include/ui/cyu_main.h
+        #        src/ui/cyu_main.cpp  include/ui/cyu_main.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -37,13 +37,13 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 if (WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE
-            Qt5::Core
-            Qt5::Widgets
+            #            Qt5::Core
+            #            Qt5::Widgets
     )
 elseif (UNIX)
     target_link_libraries(${PROJECT_NAME} PRIVATE
-            Qt5::Core
-            Qt5::Widgets
+            #            Qt5::Core
+            #            Qt5::Widgets
             rockit
     )
 else ()
