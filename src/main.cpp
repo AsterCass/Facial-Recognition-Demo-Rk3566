@@ -9,169 +9,170 @@
 #include "rk_comm_video.h"
 
 #define VI_DEV_ID       0
+#define VI_PIP_ID       0
 #define VI_CHN_ID       0
+#define VI_H 1080
+#define VI_W 1920
 
-int vi_dev_init() {
-    printf("%s\n", __func__);
-    int ret = 0;
-    int devId = VI_DEV_ID;
-    int pipeId = devId;
+#define VO_DEV_ID       0
+#define VO_LAYER_ID     0
+#define VO_CHN_ID       0
 
+
+// for 356x vo
+#define RK356X_VO_DEV_HD0 0
+#define RK356X_VO_DEV_HD1 1
+#define RK356X_VOP_LAYER_CLUSTER_0 0
+#define RK356X_VOP_LAYER_CLUSTER_1 2
+#define RK356X_VOP_LAYER_ESMART_0 4
+#define RK356X_VOP_LAYER_ESMART_1 5
+#define RK356X_VOP_LAYER_SMART_0 6
+#define RK356X_VOP_LAYER_SMART_1 7
+
+
+int viInit() {
     VI_DEV_ATTR_S stDevAttr;
     VI_DEV_BIND_PIPE_S stBindPipe;
-    memset(&stDevAttr, 0, sizeof(stDevAttr));
-    memset(&stBindPipe, 0, sizeof(stBindPipe));
+    VI_CHN_ATTR_S stChnAttr;
+    RK_S32 s32Ret = RK_FAILURE;
+
     // 0. get dev config status
-    ret = RK_MPI_VI_GetDevAttr(devId, &stDevAttr);
-    if (ret == RK_ERR_VI_NOT_CONFIG) {
+    s32Ret = RK_MPI_VI_GetDevAttr(VI_DEV_ID, &stDevAttr);
+    if (s32Ret == RK_ERR_VI_NOT_CONFIG) {
         // 0-1.config dev
-        ret = RK_MPI_VI_SetDevAttr(devId, &stDevAttr);
-        if (ret != RK_SUCCESS) {
-            printf("RK_MPI_VI_SetDevAttr %x\n", ret);
-            return -1;
+        s32Ret = RK_MPI_VI_SetDevAttr(VI_DEV_ID, &stDevAttr);
+        if (s32Ret != RK_SUCCESS) {
+            RK_LOGE("RK_MPI_VI_SetDevAttr %x", s32Ret);
+            goto __FAILED;
         }
     } else {
-        printf("RK_MPI_VI_SetDevAttr already\n");
+        RK_LOGE("RK_MPI_VI_SetDevAttr already");
     }
-    // 1.get dev enable status
-    ret = RK_MPI_VI_GetDevIsEnable(devId);
-    if (ret != RK_SUCCESS) {
+    // 1.get  dev enable status
+    s32Ret = RK_MPI_VI_GetDevIsEnable(VI_DEV_ID);
+    if (s32Ret != RK_SUCCESS) {
         // 1-2.enable dev
-        ret = RK_MPI_VI_EnableDev(devId);
-        if (ret != RK_SUCCESS) {
-            printf("RK_MPI_VI_EnableDev %x\n", ret);
-            return -1;
+        s32Ret = RK_MPI_VI_EnableDev(VI_DEV_ID);
+        if (s32Ret != RK_SUCCESS) {
+            RK_LOGE("RK_MPI_VI_EnableDev %x", s32Ret);
+            goto __FAILED;
         }
         // 1-3.bind dev/pipe
-        stBindPipe.u32Num = 1;
-        stBindPipe.PipeId[0] = pipeId;
-        ret = RK_MPI_VI_SetDevBindPipe(devId, &stBindPipe);
-        if (ret != RK_SUCCESS) {
-            printf("RK_MPI_VI_SetDevBindPipe %x\n", ret);
-            return -1;
+        stBindPipe.u32Num = VI_PIP_ID;
+        stBindPipe.PipeId[0] = VI_PIP_ID;
+        s32Ret = RK_MPI_VI_SetDevBindPipe(VI_DEV_ID, &stBindPipe);
+        if (s32Ret != RK_SUCCESS) {
+            RK_LOGE("RK_MPI_VI_SetDevBindPipe %x", s32Ret);
+            goto __FAILED;
         }
     } else {
-        printf("RK_MPI_VI_EnableDev already\n");
+        RK_LOGE("RK_MPI_VI_EnableDev already");
+    }
+    // 2.config channel
+    stChnAttr.stIspOpt.u32BufCount = 2;
+    stChnAttr.stIspOpt.enMemoryType = VI_V4L2_MEMORY_TYPE_DMABUF;
+    stChnAttr.stSize.u32Width = VI_W;
+    stChnAttr.stSize.u32Height = VI_H;
+    stChnAttr.enPixelFormat = RK_FMT_YUV420SP;
+    stChnAttr.enCompressMode = COMPRESS_MODE_NONE;
+    stChnAttr.u32Depth = 2;
+    s32Ret = RK_MPI_VI_SetChnAttr(VI_PIP_ID, VI_CHN_ID, &stChnAttr);
+    if (s32Ret != RK_SUCCESS) {
+        RK_LOGE("RK_MPI_VI_SetChnAttr %x", s32Ret);
+        goto __FAILED;
     }
 
+    // 3.enable channel
+    s32Ret = RK_MPI_VI_EnableChn(VI_PIP_ID, VI_CHN_ID);
+    if (s32Ret != RK_SUCCESS) {
+        RK_LOGE("RK_MPI_VI_EnableChn %x", s32Ret);
+        goto __FAILED;
+    }
+
+
+__FAILED:
+    return s32Ret;
+}
+
+int voInit() {
     return 0;
 }
 
-int vi_chn_init(int channelId, int width, int height) {
-    int ret;
-    // VI init
-    VI_CHN_ATTR_S vi_chn_attr;
-    memset(&vi_chn_attr, 0, sizeof(vi_chn_attr));
-    vi_chn_attr.stIspOpt.u32BufCount = 2;
-    vi_chn_attr.stIspOpt.enMemoryType = VI_V4L2_MEMORY_TYPE_DMABUF;
-    vi_chn_attr.stSize.u32Width = width;
-    vi_chn_attr.stSize.u32Height = height;
-    vi_chn_attr.enPixelFormat = RK_FMT_YUV420SP;
-    vi_chn_attr.enCompressMode = COMPRESS_MODE_NONE;
-    vi_chn_attr.u32Depth = 2;
-    ret = RK_MPI_VI_SetChnAttr(0, channelId, &vi_chn_attr);
-    ret |= RK_MPI_VI_EnableChn(0, channelId);
-    if (ret) {
-        printf("ERROR: create VI error! ret=%d\n", ret);
-        return ret;
-    }
-
-    return ret;
-}
-
-
-int vo_init(int channelId, int width, int height) {
-    int ret;
-
-    VO_PUB_ATTR_S voat = {0};
-
-    ret = RK_MPI_VO_GetPubAttr(0, &voat);
-
-    printf("RK_MPI_VO_GetPubAttr ret =  %d\n", ret);
-
-    voat.enIntfType = VO_INTF_MIPI;
-    voat.enIntfSync = VO_OUTPUT_1080P30;
-    ret = RK_MPI_VO_SetPubAttr(0, &voat);
-
-    printf("RK_MPI_VO_SetPubAttr ret =  %d\n", ret);
-
-    ret = RK_MPI_VO_Enable(0);
-
-    printf("RK_MPI_VO_Enable ret = %d\n", ret);
-
-    ret = RK_MPI_VO_BindLayer(0, 0, VO_LAYER_MODE_VIDEO);
-
-    printf("RK_MPI_VO_BindLayer ret =  %d\n", ret);
-
-    VO_VIDEO_LAYER_ATTR_S volat = {};
-    volat.enCompressMode = COMPRESS_MODE_NONE;
-    volat.enPixFormat = RK_FMT_YUV420SP;
-    volat.u32DispFrmRt = 30;
-    volat.stDispRect.u32Width = width;
-    volat.stDispRect.u32Height = height;
-    volat.stImageSize.u32Width = width;
-    volat.stImageSize.u32Height = height;;
-    volat.bBypassFrame = RK_TRUE;
-    ret = RK_MPI_VO_SetLayerAttr(0, &volat);
-
-    printf("RK_MPI_VO_SetLayerAttr ret =  %d\n", ret);
-
-    ret = RK_MPI_VO_EnableLayer(0);
-
-    printf("RK_MPI_VO_EnableLayer ret =  %d\n", ret);
-
-
-    VO_CHN_ATTR_S vocat = {0};
-    vocat.stRect.u32Width = width;
-    vocat.stRect.u32Height = height;
-
-    ret =RK_MPI_VO_SetChnAttr(0, channelId, &vocat);
-
-    printf("RK_MPI_VO_SetChnAttr ret =  %d\n", ret);
-
-    ret = RK_MPI_VO_EnableChn(0, channelId);
-
-    printf("RK_MPI_VO_EnableChn ret =  %d\n", ret);
-
-    return ret;
-}
-
 int main(int argc, char *argv[]) {
-    VIDEO_FRAME_INFO_S frame;
-    int ret;
-
     if (RK_MPI_SYS_Init() != RK_SUCCESS) {
-        RK_LOGI("rk mpi sys init fail!");
+        printf("rk mpi sys init fail! \n");
         return -1;
     }
 
-    // vi init
-    vi_dev_init();
-    RK_LOGI("vi init finish");
-    vi_chn_init(VI_CHN_ID, 1920, 1080);
-
-    RK_LOGI("chn init finish");
-
-    vo_init(VI_CHN_ID, 1920, 1080);
-
-    RK_LOGI("vo init finish");
-
-    while (true) {
-        RK_LOGI("get frame");
-        ret = RK_MPI_VI_GetChnFrame(VI_DEV_ID, VI_CHN_ID, &frame, -1);
-        if (ret != RK_SUCCESS) {
-            printf("Get frame failed: %d\n", ret);
-            usleep(100000);
-            continue;
-        }
-
-        printf("Get frame success\n");
-        printf("%d - %d\n", frame.stVFrame.u32Height, frame.stVFrame.u32Width);
-
-
-        RK_MPI_VI_ReleaseChnFrame(VI_DEV_ID, VI_CHN_ID, &frame);
-        usleep(100000);
+    RK_S32 s32Ret = RK_FAILURE;
+    s32Ret = viInit();
+    if (s32Ret != RK_SUCCESS) {
+        printf("vi %d:%d init failed:%x \n", VI_DEV_ID, VI_CHN_ID, s32Ret);
+        goto __FAILED;
     }
+
+    printf("vi %d:%d success!\n", VI_DEV_ID, VI_CHN_ID);
+
+    s32Ret = voInit();
+    if (s32Ret != RK_SUCCESS) {
+        printf("create vo failed \n");
+        goto __FAILED;
+    }
+
+    printf("vo %d:%d success!\n", VO_DEV_ID, VO_CHN_ID);
+
+
+    // bind vi to vo
+    MPP_CHN_S stSrcChn, stDestChn;
+    stSrcChn.enModId = RK_ID_VI;
+    stSrcChn.s32DevId = VI_DEV_ID;
+    stSrcChn.s32ChnId = VI_CHN_ID;
+
+    stDestChn.enModId = RK_ID_VO;
+    stDestChn.s32DevId = VO_DEV_ID;
+    stDestChn.s32ChnId = VO_CHN_ID;
+
+    s32Ret = RK_MPI_SYS_Bind(&stSrcChn, &stDestChn);
+    if (s32Ret != RK_SUCCESS) {
+        printf("vi band vo fail:%x \n", s32Ret);
+        goto __FAILED;
+    }
+
+    printf("bind success!\n");
+
+    RK_S32 loopCount = 0;
+    while (loopCount < 3000) {
+        loopCount++;
+        printf("loopCount:%d \n", loopCount);
+        // can not get the vo frameout count . so here regard as 33ms one frame.
+        usleep(33 * 1000);
+    }
+
+
+__FAILED:
+    printf("Process finish %x\n", s32Ret);
+    s32Ret = RK_MPI_SYS_UnBind(&stSrcChn, &stDestChn);
+    if (s32Ret != RK_SUCCESS) {
+        printf("RK_MPI_SYS_UnBind fail %x\n", s32Ret);
+    }
+    // disable vo
+    RK_MPI_VO_DisableLayer(VO_LAYER_ID);
+    RK_MPI_VO_DisableLayer(RK356X_VOP_LAYER_ESMART_0);
+    RK_MPI_VO_DisableLayer(RK356X_VOP_LAYER_ESMART_1);
+    RK_MPI_VO_DisableLayer(RK356X_VOP_LAYER_SMART_0);
+    RK_MPI_VO_DisableLayer(RK356X_VOP_LAYER_SMART_1);
+    RK_MPI_VO_DisableChn(VO_LAYER_ID, VO_CHN_ID);
+    RK_MPI_VO_Disable(VO_DEV_ID);
+
+    // 5. disable one chn
+    s32Ret = RK_MPI_VI_DisableChn(VI_PIP_ID, VI_CHN_ID);
+    printf("RK_MPI_VI_DisableChn %x\n", s32Ret);
+
+    RK_MPI_VO_DisableChn(VO_LAYER_ID, VO_CHN_ID);
+
+    // 6.disable dev(will diabled all chn)
+    s32Ret = RK_MPI_VI_DisableDev(VI_DEV_ID);
+    printf("RK_MPI_VI_DisableDev %x\n", s32Ret);
 
     return 0;
 }
