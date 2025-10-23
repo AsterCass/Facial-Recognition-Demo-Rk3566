@@ -105,6 +105,9 @@ int main(int argc, char *argv[]) {
     }
 
     RK_S32 s32Ret = RK_FAILURE;
+    MPP_CHN_S stSrcChn, stDestChn;
+    RK_S32 loopCount = 0;
+
     s32Ret = viInit();
     if (s32Ret != RK_SUCCESS) {
         printf("vi %d:%d init failed:%x \n", VI_DEV_ID, VI_CHN_ID, s32Ret);
@@ -123,7 +126,6 @@ int main(int argc, char *argv[]) {
 
 
     // bind vi to vo
-    MPP_CHN_S stSrcChn, stDestChn;
     stSrcChn.enModId = RK_ID_VI;
     stSrcChn.s32DevId = VI_DEV_ID;
     stSrcChn.s32ChnId = VI_CHN_ID;
@@ -140,7 +142,6 @@ int main(int argc, char *argv[]) {
 
     printf("bind success!\n");
 
-    RK_S32 loopCount = 0;
     while (loopCount < 3000) {
         loopCount++;
         printf("loopCount:%d \n", loopCount);
