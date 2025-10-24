@@ -15,7 +15,7 @@
 #define VI_W 1920
 
 #define VO_DEV_ID       1
-#define VO_LAYER_ID     5
+#define VO_LAYER_ID     4
 #define VO_CHN_ID       0
 
 
@@ -79,6 +79,8 @@ int viInit() {
     stChnAttr.stSize.u32Height = VI_H;
     stChnAttr.enPixelFormat = RK_FMT_YUV420SP;
     stChnAttr.enCompressMode = COMPRESS_MODE_NONE;
+    stChnAttr.stFrameRate.s32DstFrameRate = 30;
+    stChnAttr.stFrameRate.s32SrcFrameRate = 30;
     stChnAttr.u32Depth = 2;
     s32Ret = RK_MPI_VI_SetChnAttr(VI_PIP_ID, VI_CHN_ID, &stChnAttr);
     if (s32Ret != RK_SUCCESS) {
@@ -120,7 +122,7 @@ int voInit() {
     stLayerAttr.enPixFormat = RK_FMT_YUV420SP;
     stLayerAttr.stDispRect.s32X = 0;
     stLayerAttr.stDispRect.s32Y = 0;
-    stLayerAttr.u32DispFrmRt = 60;
+    stLayerAttr.u32DispFrmRt = 30;
     stLayerAttr.stDispRect.u32Width = 720;
     stLayerAttr.stDispRect.u32Height = 1280;
     stLayerAttr.stImageSize.u32Width = 720;
