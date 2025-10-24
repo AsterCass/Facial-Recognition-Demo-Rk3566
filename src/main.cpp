@@ -14,8 +14,8 @@
 #define VI_H 1080
 #define VI_W 1920
 
-#define VO_DEV_ID       0
-#define VO_LAYER_ID     0
+#define VO_DEV_ID       1
+#define VO_LAYER_ID     5
 #define VO_CHN_ID       0
 
 
@@ -113,14 +113,15 @@ int voInit() {
     memset(&VoPubAttr, 0, sizeof(VO_PUB_ATTR_S));
     memset(&stLayerAttr, 0, sizeof(VO_VIDEO_LAYER_ATTR_S));
 
-    stLayerAttr.enPixFormat = RK_FMT_RGB888;
+    stLayerAttr.enPixFormat = RK_FMT_YUV420SP;
     stLayerAttr.stDispRect.s32X = 0;
     stLayerAttr.stDispRect.s32Y = 0;
-    stLayerAttr.u32DispFrmRt = 30;
-    stLayerAttr.stDispRect.u32Width = 1920;
-    stLayerAttr.stDispRect.u32Height = 1080;
-    stLayerAttr.stImageSize.u32Width = 1920;
-    stLayerAttr.stImageSize.u32Height = 1080;
+    stLayerAttr.u32DispFrmRt = 60;
+    stLayerAttr.stDispRect.u32Width = 720;
+    stLayerAttr.stDispRect.u32Height = 1280;
+    stLayerAttr.stImageSize.u32Width = 720;
+    stLayerAttr.stImageSize.u32Height = 1280;
+    stLayerAttr.bBypassFrame = RK_TRUE;
 
     s32Ret = RK_MPI_VO_GetPubAttr(VoDev, &VoPubAttr);
     if (s32Ret != RK_SUCCESS) {
@@ -129,7 +130,7 @@ int voInit() {
 
     printf("RK_MPI_VO_GetPubAttr finish \n");
 
-    VoPubAttr.enIntfType = VO_INTF_HDMI;
+    VoPubAttr.enIntfType = VO_INTF_MIPI;
     VoPubAttr.enIntfSync = VO_OUTPUT_DEFAULT;
 
     s32Ret = RK_MPI_VO_SetPubAttr(VoDev, &VoPubAttr);
@@ -146,15 +147,7 @@ int voInit() {
 
     printf("RK_MPI_VO_Enable finish \n");
 
-    s32Ret = RK_MPI_VO_SetLayerAttr(VoLayer, &stLayerAttr);
-    if (s32Ret != RK_SUCCESS) {
-        RK_LOGE("RK_MPI_VO_SetLayerAttr failed,s32Ret:%d\n", s32Ret);
-        return RK_FAILURE;
-    }
-
-    printf("RK_MPI_VO_SetLayerAttr finish \n");
-
-    s32Ret = RK_MPI_VO_BindLayer(VoLayer, VoDev, VO_LAYER_MODE_GRAPHIC);
+    s32Ret = RK_MPI_VO_BindLayer(VoLayer, VoDev, VO_LAYER_MODE_VIDEO);
     if (s32Ret != RK_SUCCESS) {
         RK_LOGE("RK_MPI_VO_BindLayer failed,s32Ret:%d\n", s32Ret);
         return RK_FAILURE;
@@ -162,6 +155,13 @@ int voInit() {
 
     printf("RK_MPI_VO_BindLayer finish \n");
 
+    s32Ret = RK_MPI_VO_SetLayerAttr(VoLayer, &stLayerAttr);
+    if (s32Ret != RK_SUCCESS) {
+        RK_LOGE("RK_MPI_VO_SetLayerAttr failed,s32Ret:%d\n", s32Ret);
+        return RK_FAILURE;
+    }
+
+    printf("RK_MPI_VO_SetLayerAttr finish \n");
 
     s32Ret = RK_MPI_VO_EnableLayer(VoLayer);
     if (s32Ret != RK_SUCCESS) {
@@ -191,7 +191,6 @@ int voInit() {
 }
 
 int main(int argc, char *argv[]) {
-
     printf("sys init start\n");
     RK_S32 s32Ret = RK_FAILURE;
     MPP_CHN_S stSrcChn, stDestChn;
