@@ -36,6 +36,10 @@ int viInit() {
     VI_CHN_ATTR_S stChnAttr;
     RK_S32 s32Ret = RK_FAILURE;
 
+    memset(&stDevAttr, 0, sizeof(stDevAttr));
+    memset(&stBindPipe, 0, sizeof(stBindPipe));
+    memset(&stChnAttr, 0, sizeof(stChnAttr));
+
     // 0. get dev config status
     s32Ret = RK_MPI_VI_GetDevAttr(VI_DEV_ID, &stDevAttr);
     if (s32Ret == RK_ERR_VI_NOT_CONFIG) {
@@ -58,7 +62,7 @@ int viInit() {
             goto __FAILED;
         }
         // 1-3.bind dev/pipe
-        stBindPipe.u32Num = VI_PIP_ID;
+        stBindPipe.u32Num = 1;
         stBindPipe.PipeId[0] = VI_PIP_ID;
         s32Ret = RK_MPI_VI_SetDevBindPipe(VI_DEV_ID, &stBindPipe);
         if (s32Ret != RK_SUCCESS) {
@@ -146,6 +150,23 @@ int voInit() {
     }
 
     printf("RK_MPI_VO_Enable finish \n");
+
+    RK_MPI_VO_UnBindLayer(0, 0);
+    RK_MPI_VO_UnBindLayer(1, 0);
+    RK_MPI_VO_UnBindLayer(2, 0);
+    RK_MPI_VO_UnBindLayer(3, 0);
+    RK_MPI_VO_UnBindLayer(4, 0);
+    RK_MPI_VO_UnBindLayer(5, 0);
+    RK_MPI_VO_UnBindLayer(6, 0);
+    RK_MPI_VO_UnBindLayer(7, 0);
+    RK_MPI_VO_UnBindLayer(0, 1);
+    RK_MPI_VO_UnBindLayer(1, 1);
+    RK_MPI_VO_UnBindLayer(2, 1);
+    RK_MPI_VO_UnBindLayer(3, 1);
+    RK_MPI_VO_UnBindLayer(4, 1);
+    RK_MPI_VO_UnBindLayer(5, 1);
+    RK_MPI_VO_UnBindLayer(6, 1);
+    RK_MPI_VO_UnBindLayer(7, 1);
 
     s32Ret = RK_MPI_VO_BindLayer(VoLayer, VoDev, VO_LAYER_MODE_VIDEO);
     if (s32Ret != RK_SUCCESS) {
