@@ -95,7 +95,99 @@ __FAILED:
 }
 
 int voInit() {
-    return 0;
+    /* Enable VO */
+    VO_PUB_ATTR_S VoPubAttr;
+    VO_VIDEO_LAYER_ATTR_S stLayerAttr;
+    RK_S32 s32Ret = RK_SUCCESS;
+    VO_CHN_ATTR_S stChnAttr;
+    VO_LAYER VoLayer = VO_LAYER_ID;
+    VO_DEV VoDev = VO_DEV_ID;
+
+    RK_MPI_VO_DisableLayer(VoLayer);
+    RK_MPI_VO_DisableLayer(RK356X_VOP_LAYER_ESMART_0);
+    RK_MPI_VO_DisableLayer(RK356X_VOP_LAYER_ESMART_1);
+    RK_MPI_VO_DisableLayer(RK356X_VOP_LAYER_SMART_0);
+    RK_MPI_VO_DisableLayer(RK356X_VOP_LAYER_SMART_1);
+    RK_MPI_VO_Disable(VoDev);
+
+    memset(&VoPubAttr, 0, sizeof(VO_PUB_ATTR_S));
+    memset(&stLayerAttr, 0, sizeof(VO_VIDEO_LAYER_ATTR_S));
+
+    stLayerAttr.enPixFormat = RK_FMT_RGB888;
+    stLayerAttr.stDispRect.s32X = 0;
+    stLayerAttr.stDispRect.s32Y = 0;
+    stLayerAttr.u32DispFrmRt = 30;
+    stLayerAttr.stDispRect.u32Width = 1920;
+    stLayerAttr.stDispRect.u32Height = 1080;
+    stLayerAttr.stImageSize.u32Width = 1920;
+    stLayerAttr.stImageSize.u32Height = 1080;
+
+    s32Ret = RK_MPI_VO_GetPubAttr(VoDev, &VoPubAttr);
+    if (s32Ret != RK_SUCCESS) {
+        return s32Ret;
+    }
+
+    printf("RK_MPI_VO_GetPubAttr finish \n");
+
+    VoPubAttr.enIntfType = VO_INTF_HDMI;
+    VoPubAttr.enIntfSync = VO_OUTPUT_DEFAULT;
+
+    s32Ret = RK_MPI_VO_SetPubAttr(VoDev, &VoPubAttr);
+    if (s32Ret != RK_SUCCESS) {
+        return s32Ret;
+    }
+
+    printf("RK_MPI_VO_SetPubAttr finish \n");
+
+    s32Ret = RK_MPI_VO_Enable(VoDev);
+    if (s32Ret != RK_SUCCESS) {
+        return s32Ret;
+    }
+
+    printf("RK_MPI_VO_Enable finish \n");
+
+    s32Ret = RK_MPI_VO_SetLayerAttr(VoLayer, &stLayerAttr);
+    if (s32Ret != RK_SUCCESS) {
+        RK_LOGE("RK_MPI_VO_SetLayerAttr failed,s32Ret:%d\n", s32Ret);
+        return RK_FAILURE;
+    }
+
+    printf("RK_MPI_VO_SetLayerAttr finish \n");
+
+    s32Ret = RK_MPI_VO_BindLayer(VoLayer, VoDev, VO_LAYER_MODE_GRAPHIC);
+    if (s32Ret != RK_SUCCESS) {
+        RK_LOGE("RK_MPI_VO_BindLayer failed,s32Ret:%d\n", s32Ret);
+        return RK_FAILURE;
+    }
+
+    printf("RK_MPI_VO_BindLayer finish \n");
+
+
+    s32Ret = RK_MPI_VO_EnableLayer(VoLayer);
+    if (s32Ret != RK_SUCCESS) {
+        RK_LOGE("RK_MPI_VO_EnableLayer failed,s32Ret:%d\n", s32Ret);
+        return RK_FAILURE;
+    }
+
+    printf("RK_MPI_VO_EnableLayer finish \n");
+
+    stChnAttr.stRect.s32X = 0;
+    stChnAttr.stRect.s32Y = 0;
+    stChnAttr.stRect.u32Width = stLayerAttr.stImageSize.u32Width;
+    stChnAttr.stRect.u32Height = stLayerAttr.stImageSize.u32Height;
+    stChnAttr.u32Priority = 0;
+    stChnAttr.u32FgAlpha = 128;
+    stChnAttr.u32BgAlpha = 0;
+
+    s32Ret = RK_MPI_VO_SetChnAttr(VoLayer, VO_CHN_ID, &stChnAttr);
+    if (s32Ret != RK_SUCCESS) {
+        RK_LOGE("set chn Attr failed,s32Ret:%d\n", s32Ret);
+        return RK_FAILURE;
+    }
+
+    printf("RK_MPI_VO_SetChnAttr finish \n");
+
+    return s32Ret;
 }
 
 int main(int argc, char *argv[]) {
@@ -106,7 +198,7 @@ int main(int argc, char *argv[]) {
     RK_S32 loopCount = 0;
 
     s32Ret = RK_MPI_SYS_Init();
-    if (s32Ret() != RK_SUCCESS) {
+    if (s32Ret != RK_SUCCESS) {
         printf("rk mpi sys init fail! \n");
         return -1;
     }
