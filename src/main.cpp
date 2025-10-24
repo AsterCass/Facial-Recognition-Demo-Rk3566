@@ -42,11 +42,11 @@ int viInit() {
         // 0-1.config dev
         s32Ret = RK_MPI_VI_SetDevAttr(VI_DEV_ID, &stDevAttr);
         if (s32Ret != RK_SUCCESS) {
-            RK_LOGE("RK_MPI_VI_SetDevAttr %x", s32Ret);
+            printf("RK_MPI_VI_SetDevAttr %x\n", s32Ret);
             goto __FAILED;
         }
     } else {
-        RK_LOGE("RK_MPI_VI_SetDevAttr already");
+        printf("RK_MPI_VI_SetDevAttr already\n");
     }
     // 1.get  dev enable status
     s32Ret = RK_MPI_VI_GetDevIsEnable(VI_DEV_ID);
@@ -54,7 +54,7 @@ int viInit() {
         // 1-2.enable dev
         s32Ret = RK_MPI_VI_EnableDev(VI_DEV_ID);
         if (s32Ret != RK_SUCCESS) {
-            RK_LOGE("RK_MPI_VI_EnableDev %x", s32Ret);
+            printf("RK_MPI_VI_EnableDev %x\n", s32Ret);
             goto __FAILED;
         }
         // 1-3.bind dev/pipe
@@ -62,11 +62,11 @@ int viInit() {
         stBindPipe.PipeId[0] = VI_PIP_ID;
         s32Ret = RK_MPI_VI_SetDevBindPipe(VI_DEV_ID, &stBindPipe);
         if (s32Ret != RK_SUCCESS) {
-            RK_LOGE("RK_MPI_VI_SetDevBindPipe %x", s32Ret);
+            printf("RK_MPI_VI_SetDevBindPipe %x", s32Ret);
             goto __FAILED;
         }
     } else {
-        RK_LOGE("RK_MPI_VI_EnableDev already");
+        printf("RK_MPI_VI_EnableDev already\n");
     }
     // 2.config channel
     stChnAttr.stIspOpt.u32BufCount = 2;
@@ -78,14 +78,14 @@ int viInit() {
     stChnAttr.u32Depth = 2;
     s32Ret = RK_MPI_VI_SetChnAttr(VI_PIP_ID, VI_CHN_ID, &stChnAttr);
     if (s32Ret != RK_SUCCESS) {
-        RK_LOGE("RK_MPI_VI_SetChnAttr %x", s32Ret);
+        printf("RK_MPI_VI_SetChnAttr %x\n", s32Ret);
         goto __FAILED;
     }
 
     // 3.enable channel
     s32Ret = RK_MPI_VI_EnableChn(VI_PIP_ID, VI_CHN_ID);
     if (s32Ret != RK_SUCCESS) {
-        RK_LOGE("RK_MPI_VI_EnableChn %x", s32Ret);
+        printf("RK_MPI_VI_EnableChn %x\n", s32Ret);
         goto __FAILED;
     }
 
@@ -99,14 +99,19 @@ int voInit() {
 }
 
 int main(int argc, char *argv[]) {
-    if (RK_MPI_SYS_Init() != RK_SUCCESS) {
+
+    printf("sys init start\n");
+    RK_S32 s32Ret = RK_FAILURE;
+    MPP_CHN_S stSrcChn, stDestChn;
+    RK_S32 loopCount = 0;
+
+    s32Ret = RK_MPI_SYS_Init();
+    if (s32Ret() != RK_SUCCESS) {
         printf("rk mpi sys init fail! \n");
         return -1;
     }
 
-    RK_S32 s32Ret = RK_FAILURE;
-    MPP_CHN_S stSrcChn, stDestChn;
-    RK_S32 loopCount = 0;
+    printf("sys init finish\n");
 
     s32Ret = viInit();
     if (s32Ret != RK_SUCCESS) {
