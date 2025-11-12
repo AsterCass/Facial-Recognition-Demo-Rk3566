@@ -86,6 +86,7 @@ int viInit() {
     vi_chn_attr.stIspOpt.enMemoryType = VI_V4L2_MEMORY_TYPE_DMABUF;
     vi_chn_attr.stSize.u32Width = VI_W;
     vi_chn_attr.stSize.u32Height = VI_H;
+    vi_chn_attr.stFrameRate.s32SrcFrameRate = 30;
     vi_chn_attr.enPixelFormat = RK_FMT_YUV420SP;
     vi_chn_attr.enCompressMode = COMPRESS_MODE_NONE; // COMPRESS_AFBC_16x16;
     vi_chn_attr.u32Depth = 2; //0, get fail, 1 - u32BufCount, can get, if bind to other device, must be < u32BufCount
@@ -286,6 +287,50 @@ int voInit() {
     return s32Ret;
 }
 
+// int voInitHdmi() {
+//     VO_PUB_ATTR_S VoPubAttr;
+//     VO_VIDEO_LAYER_ATTR_S stLayerAttr;
+//     RK_U32 s32Ret;
+//     RK_U32 VoDev, VoLayer;
+//
+//     memset(&VoPubAttr, 0, sizeof(VO_PUB_ATTR_S));
+//     memset(&stLayerAttr, 0, sizeof(VO_VIDEO_LAYER_ATTR_S));
+//     VoPubAttr.enIntfType = VO_INTF_HDMI;
+//     VoPubAttr.enIntfSync = VO_OUTPUT_1080P50;
+//     VoDev = RK356X_VO_DEV_HD0;
+//     VoLayer = RK356X_VOP_LAYER_CLUSTER0;
+//
+//     RK_MPI_VO_BindLayer(VoLayer, VoDev, VO_LAYER_MODE_VIDEO);
+//     s32Ret = RK_MPI_VO_SetPubAttr(VoDev, &VoPubAttr);
+//     if (s32Ret != RK_SUCCESS)
+//     {
+//         return -1;
+//     }
+//     s32Ret = RK_MPI_VO_Enable(VoDev);
+//     if (s32Ret != RK_SUCCESS) {
+//         return -1;
+//     }
+//     stLayerAttr.stDispRect.s32X = 0;
+//     stLayerAttr.stDispRect.s32Y = 0;
+//     stLayerAttr.stDispRect.u32Width = 1920;
+//     stLayerAttr.stDispRect.u32Height = 1080;
+//     stLayerAttr.stImageSize.u32Width = 1920;
+//     stLayerAttr.stImageSize.u32Height = 1080;
+//     stLayerAttr.u32DispFrmRt = 25;
+//     stLayerAttr.enPixFormat = RK_FMT_YUV420SP;
+//     stLayerAttr.enCompressMode = COMPRESS_AFBC_16x16;
+//     s32Ret = RK_MPI_VO_SetLayerAttr(VoLayer, &stLayerAttr);
+//     if (s32Ret != RK_SUCCESS) {
+//         return -1;
+//     }
+//     s32Ret = RK_MPI_VO_EnableLayer(VoLayer);
+//     if (s32Ret != RK_SUCCESS) {
+//         return -1;
+//     }
+//
+//
+// }
+
 int main(int argc, char *argv[]) {
     printf("sys init start\n");
     RK_S32 s32Ret = RK_FAILURE;
@@ -308,36 +353,43 @@ int main(int argc, char *argv[]) {
 
     printf("vi %d:%d success!\n", VI_DEV_ID, VI_CHN_ID);
 
-    s32Ret = voInit();
-    if (s32Ret != RK_SUCCESS) {
-        printf("create vo failed \n");
-        goto __FAILED;
-    }
-
-    printf("vo %d:%d success!\n", VO_DEV_ID, VO_CHN_ID);
-
-
-    // bind vi to vo
-    stSrcChn.enModId = RK_ID_VI;
-    stSrcChn.s32DevId = VI_DEV_ID;
-    stSrcChn.s32ChnId = VI_CHN_ID;
-
-    stDestChn.enModId = RK_ID_VO;
-    stDestChn.s32DevId = VO_DEV_ID;
-    stDestChn.s32ChnId = VO_CHN_ID;
-
-    s32Ret = RK_MPI_SYS_Bind(&stSrcChn, &stDestChn);
-    if (s32Ret != RK_SUCCESS) {
-        printf("vi band vo fail:%x \n", s32Ret);
-        goto __FAILED;
-    }
-
-    printf("bind success!\n");
+    // s32Ret = voInit();
+    // if (s32Ret != RK_SUCCESS) {
+    //     printf("create vo failed \n");
+    //     goto __FAILED;
+    // }
+    //
+    // printf("vo %d:%d success!\n", VO_DEV_ID, VO_CHN_ID);
+    //
+    //
+    // // bind vi to vo
+    // stSrcChn.enModId = RK_ID_VI;
+    // stSrcChn.s32DevId = VI_DEV_ID;
+    // stSrcChn.s32ChnId = VI_CHN_ID;
+    //
+    // stDestChn.enModId = RK_ID_VO;
+    // stDestChn.s32DevId = VO_DEV_ID;
+    // stDestChn.s32ChnId = VO_CHN_ID;
+    //
+    // s32Ret = RK_MPI_SYS_Bind(&stSrcChn, &stDestChn);
+    // if (s32Ret != RK_SUCCESS) {
+    //     printf("vi band vo fail:%x \n", s32Ret);
+    //     goto __FAILED;
+    // }
+    //
+    // printf("bind success!\n");
 
     while (loopCount < 3000) {
         loopCount++;
         printf("loopCount:%d \n", loopCount);
         // can not get the vo frameout count . so here regard as 33ms one frame.
+
+        VIDEO_FRAME_INFO_S data;
+        RK_MPI_VI_GetChnFrame(0, 0, &data, 0);
+
+        printf("%d %d", data.stVFrame.u32Height, data.stVFrame.u32Width);
+
+        RK_MPI_VI_ReleaseChnFrame(0, 0, &data);
         usleep(33 * 1000);
     }
 
