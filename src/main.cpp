@@ -115,6 +115,7 @@ int main(int argc, char *argv[]) {
     stVpssChnAttr.stFrameRate.s32DstFrameRate = -1;
     stVpssChnAttr.u32Width = 720;
     stVpssChnAttr.u32Height = 1280;
+    stVpssChnAttr.u32Depth = 2;
     stVpssChnAttr.enCompressMode = COMPRESS_MODE_NONE;
 
     s32Ret = RK_MPI_VPSS_CreateGrp(VpssGrp, &stGrpVpssAttr);
