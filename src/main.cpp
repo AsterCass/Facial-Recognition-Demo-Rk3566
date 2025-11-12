@@ -275,8 +275,24 @@ int main(int argc, char *argv[]) {
     RK_S32 loopCount = 0;
     while (loopCount < 100000) {
         loopCount++;
-        //RK_LOGE("loopCount:%d", loopCount);
-        // can not get the vo frameout count . so here regard as 33ms one frame.
+
+        VIDEO_FRAME_INFO_S stViFrame;
+        memset(&stViFrame, 0, sizeof(VIDEO_FRAME_INFO_S));
+        // get vi frame
+         s32Ret = RK_MPI_VPSS_GetChnFrame(0, 0, &stViFrame, 0);
+        if(s32Ret == RK_SUCCESS) {
+            printf("RK_MPI_VO_EnableChn success %d %d\n",
+                stViFrame.stVFrame.u32Width, stViFrame.stVFrame.u32Height);
+        } else
+        {
+            printf("RK_MPI_VPSS_GetChnFrame fail ! ret = %d \n", s32Ret);
+        }
+
+        s32Ret = RK_MPI_VPSS_ReleaseChnFrame(0, 0, &stViFrame);
+        if (s32Ret != RK_SUCCESS) {
+            printf("RK_MPI_VPSS_ReleaseChnFrame fail ! ret = %d \n", s32Ret);
+        }
+
         usleep(33*1000);
     }
 
