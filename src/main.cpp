@@ -96,21 +96,39 @@ int main(int argc, char *argv[]) {
     // vpss
     VPSS_GRP VpssGrp = 0;
     VPSS_CHN VpssChn = 0;
-    VPSS_GRP_ATTR_S stGrpAttr;
+    VPSS_CHN_ATTR_S stVpssChnAttr;
+    VPSS_GRP_ATTR_S stGrpVpssAttr;
+    memset(&stVpssChnAttr, 0, sizeof(VPSS_CHN_ATTR_S));
+    memset(&stGrpVpssAttr, 0, sizeof(VPSS_GRP_ATTR_S));
 
-    memset(&stGrpAttr, 0, sizeof(stGrpAttr));
-    stGrpAttr.u32MaxW = 720;
-    stGrpAttr.u32MaxH = 1280;
-    stGrpAttr.enPixelFormat = RK_FMT_YUV420SP;
-    stGrpAttr.stFrameRate.s32SrcFrameRate = -1;
-    stGrpAttr.stFrameRate.s32DstFrameRate = -1;
+    stGrpVpssAttr.u32MaxW = 4096;
+    stGrpVpssAttr.u32MaxH = 4096;
+    stGrpVpssAttr.enPixelFormat = RK_FMT_YUV420SP;
+    stGrpVpssAttr.stFrameRate.s32SrcFrameRate = -1;
+    stGrpVpssAttr.stFrameRate.s32DstFrameRate = -1;
+    stGrpVpssAttr.enCompressMode = COMPRESS_MODE_NONE;
 
-    s32Ret = RK_MPI_VPSS_CreateGrp(VpssGrp, &stGrpAttr);
+    stVpssChnAttr.enChnMode = VPSS_CHN_MODE_USER;
+    stVpssChnAttr.enDynamicRange = DYNAMIC_RANGE_SDR8;
+    stVpssChnAttr.enPixelFormat = RK_FMT_YUV420SP;
+    stVpssChnAttr.stFrameRate.s32SrcFrameRate = -1;
+    stVpssChnAttr.stFrameRate.s32DstFrameRate = -1;
+    stVpssChnAttr.u32Width = 720;
+    stVpssChnAttr.u32Height = 1280;
+    stVpssChnAttr.enCompressMode = COMPRESS_MODE_NONE;
+
+    s32Ret = RK_MPI_VPSS_CreateGrp(VpssGrp, &stGrpVpssAttr);
     if (s32Ret != RK_SUCCESS) {
         printf("RK_MPI_VPSS_CreateGrp fail ! ret = %d \n", s32Ret);
         return RK_FAILURE;
     }
     printf("RK_MPI_VPSS_CreateGrp success\n");
+    s32Ret = RK_MPI_VPSS_SetChnAttr(VpssGrp, VpssChn, &stVpssChnAttr);
+    if (s32Ret != RK_SUCCESS) {
+        printf("RK_MPI_VPSS_SetChnAttr fail ! ret = %d \n", s32Ret);
+        return RK_FAILURE;
+    }
+    printf("RK_MPI_VPSS_SetChnAttr success\n");
     s32Ret =  RK_MPI_VPSS_EnableChn(VpssGrp, VpssChn);
     if (s32Ret != RK_SUCCESS) {
         printf("RK_MPI_VPSS_EnableChn fail ! ret = %d \n", s32Ret);
