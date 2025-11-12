@@ -1,11 +1,10 @@
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 #include <unistd.h>
 #include "rk_mpi_vi.h"
 #include "rk_mpi_vpss.h"
 #include "rk_mpi_vo.h"
 #include "rk_mpi_sys.h"
-#include "rk_mpi_mb.h"
 #include "rk_comm_video.h"
 
 #define VI_DEV_ID       0
@@ -13,11 +12,6 @@
 #define VI_CHN_ID       1
 #define VI_H 1080
 #define VI_W 1920
-
-#define VO_DEV_ID       1
-#define VO_LAYER_ID     4
-#define VO_CHN_ID       0
-
 
 // for 356x vo
 #define RK356X_VO_DEV_HD0 0
@@ -123,10 +117,10 @@ int main(int argc, char *argv[]) {
         stLayerAttr.stDispRect.s32X = 0;
         stLayerAttr.stDispRect.s32Y = 0;
         stLayerAttr.u32DispFrmRt = 30;
-        stLayerAttr.stDispRect.u32Width = 1920;
-        stLayerAttr.stDispRect.u32Height = 1080;
-        stLayerAttr.stImageSize.u32Width = 1920;
-        stLayerAttr.stImageSize.u32Height = 1080;
+        stLayerAttr.stDispRect.u32Width = 360;
+        stLayerAttr.stDispRect.u32Height = 640;
+        stLayerAttr.stImageSize.u32Width = 360;
+        stLayerAttr.stImageSize.u32Height = 640;
 
         s32Ret = RK_MPI_VO_GetPubAttr(VoDev, &VoPubAttr);
         if (s32Ret != RK_SUCCESS) {
@@ -135,7 +129,7 @@ int main(int argc, char *argv[]) {
         }
         printf("RK_MPI_VO_GetPubAttr success\n");
 
-        VoPubAttr.enIntfType = VO_INTF_HDMI;
+        VoPubAttr.enIntfType = VO_INTF_MIPI;
         VoPubAttr.enIntfSync = VO_OUTPUT_DEFAULT;
 
         s32Ret = RK_MPI_VO_SetPubAttr(VoDev, &VoPubAttr);
