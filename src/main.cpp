@@ -31,73 +31,146 @@
 
 
 int viInit() {
+    printf("%s\n", __func__);
+    int ret = 0;
+    int devId = VI_DEV_ID;
+    int pipeId = VI_PIP_ID;
+
     VI_DEV_ATTR_S stDevAttr;
     VI_DEV_BIND_PIPE_S stBindPipe;
-    VI_CHN_ATTR_S stChnAttr;
-    RK_S32 s32Ret = RK_FAILURE;
-
     memset(&stDevAttr, 0, sizeof(stDevAttr));
     memset(&stBindPipe, 0, sizeof(stBindPipe));
-    memset(&stChnAttr, 0, sizeof(stChnAttr));
 
     // 0. get dev config status
-    s32Ret = RK_MPI_VI_GetDevAttr(VI_DEV_ID, &stDevAttr);
-    if (s32Ret == RK_ERR_VI_NOT_CONFIG) {
+    ret = RK_MPI_VI_GetDevAttr(devId, &stDevAttr);
+    if (ret == RK_ERR_VI_NOT_CONFIG) {
         // 0-1.config dev
-        s32Ret = RK_MPI_VI_SetDevAttr(VI_DEV_ID, &stDevAttr);
-        if (s32Ret != RK_SUCCESS) {
-            printf("RK_MPI_VI_SetDevAttr %x\n", s32Ret);
-            goto __FAILED;
+        ret = RK_MPI_VI_SetDevAttr(devId, &stDevAttr);
+        if (ret != RK_SUCCESS) {
+            printf("RK_MPI_VI_SetDevAttr %x\n", ret);
+            return -1;
         }
     } else {
         printf("RK_MPI_VI_SetDevAttr already\n");
     }
-    // 1.get  dev enable status
-    s32Ret = RK_MPI_VI_GetDevIsEnable(VI_DEV_ID);
-    if (s32Ret != RK_SUCCESS) {
+
+    printf("RK_MPI_VI_SetDevAttr success\n");
+
+    // 1.get dev enable status
+    ret = RK_MPI_VI_GetDevIsEnable(devId);
+    if (ret != RK_SUCCESS) {
         // 1-2.enable dev
-        s32Ret = RK_MPI_VI_EnableDev(VI_DEV_ID);
-        if (s32Ret != RK_SUCCESS) {
-            printf("RK_MPI_VI_EnableDev %x\n", s32Ret);
-            goto __FAILED;
+        ret = RK_MPI_VI_EnableDev(devId);
+        if (ret != RK_SUCCESS) {
+            printf("RK_MPI_VI_EnableDev %x\n", ret);
+            return -1;
         }
         // 1-3.bind dev/pipe
         stBindPipe.u32Num = 1;
-        stBindPipe.PipeId[0] = VI_PIP_ID;
-        s32Ret = RK_MPI_VI_SetDevBindPipe(VI_DEV_ID, &stBindPipe);
-        if (s32Ret != RK_SUCCESS) {
-            printf("RK_MPI_VI_SetDevBindPipe %x", s32Ret);
-            goto __FAILED;
+        stBindPipe.PipeId[0] = pipeId;
+        ret = RK_MPI_VI_SetDevBindPipe(devId, &stBindPipe);
+        if (ret != RK_SUCCESS) {
+            printf("RK_MPI_VI_SetDevBindPipe %x\n", ret);
+            return -1;
         }
     } else {
         printf("RK_MPI_VI_EnableDev already\n");
     }
-    // 2.config channel
-    stChnAttr.stIspOpt.u32BufCount = 2;
-    stChnAttr.stIspOpt.enMemoryType = VI_V4L2_MEMORY_TYPE_DMABUF;
-    stChnAttr.stSize.u32Width = VI_W;
-    stChnAttr.stSize.u32Height = VI_H;
-    stChnAttr.enPixelFormat = RK_FMT_YUV420SP;
-    stChnAttr.enCompressMode = COMPRESS_MODE_NONE;
-    stChnAttr.stFrameRate.s32DstFrameRate = 30;
-    stChnAttr.stFrameRate.s32SrcFrameRate = 30;
-    stChnAttr.u32Depth = 2;
-    s32Ret = RK_MPI_VI_SetChnAttr(VI_PIP_ID, VI_CHN_ID, &stChnAttr);
-    if (s32Ret != RK_SUCCESS) {
-        printf("RK_MPI_VI_SetChnAttr %x\n", s32Ret);
-        goto __FAILED;
+
+    printf("RK_MPI_VI_EnableDev success\n");
+
+    // 2.chn
+    VI_CHN_ATTR_S vi_chn_attr;
+    memset(&vi_chn_attr, 0, sizeof(vi_chn_attr));
+    vi_chn_attr.stIspOpt.u32BufCount = 2;
+    vi_chn_attr.stIspOpt.enMemoryType = VI_V4L2_MEMORY_TYPE_DMABUF;
+    vi_chn_attr.stSize.u32Width = VI_W;
+    vi_chn_attr.stSize.u32Height = VI_H;
+    vi_chn_attr.enPixelFormat = RK_FMT_YUV420SP;
+    vi_chn_attr.enCompressMode = COMPRESS_MODE_NONE; // COMPRESS_AFBC_16x16;
+    vi_chn_attr.u32Depth = 2; //0, get fail, 1 - u32BufCount, can get, if bind to other device, must be < u32BufCount
+    ret = RK_MPI_VI_SetChnAttr(VI_PIP_ID, VI_CHN_ID, &vi_chn_attr);
+    if (ret != RK_SUCCESS) {
+        printf("RK_MPI_VI_SetChnAttr error! ret=%d\n", ret);
+        return -1;
+    }
+    ret = RK_MPI_VI_EnableChn(VI_PIP_ID, VI_CHN_ID);
+    if (ret != RK_SUCCESS) {
+        printf("RK_MPI_VI_EnableChn error! ret=%d\n", ret);
+        return -1;
     }
 
-    // 3.enable channel
-    s32Ret = RK_MPI_VI_EnableChn(VI_PIP_ID, VI_CHN_ID);
-    if (s32Ret != RK_SUCCESS) {
-        printf("RK_MPI_VI_EnableChn %x\n", s32Ret);
-        goto __FAILED;
-    }
+    printf("RK_MPI_VI_EnableChn success\n");
 
+    return 0;
 
-__FAILED:
-    return s32Ret;
+//     VI_DEV_ATTR_S stDevAttr;
+//     VI_DEV_BIND_PIPE_S stBindPipe;
+//     VI_CHN_ATTR_S stChnAttr;
+//     RK_S32 s32Ret = RK_FAILURE;
+//
+//     memset(&stDevAttr, 0, sizeof(stDevAttr));
+//     memset(&stBindPipe, 0, sizeof(stBindPipe));
+//     memset(&stChnAttr, 0, sizeof(stChnAttr));
+//
+//     // 0. get dev config status
+//     s32Ret = RK_MPI_VI_GetDevAttr(VI_DEV_ID, &stDevAttr);
+//     if (s32Ret == RK_ERR_VI_NOT_CONFIG) {
+//         // 0-1.config dev
+//         s32Ret = RK_MPI_VI_SetDevAttr(VI_DEV_ID, &stDevAttr);
+//         if (s32Ret != RK_SUCCESS) {
+//             printf("RK_MPI_VI_SetDevAttr %x\n", s32Ret);
+//             goto __FAILED;
+//         }
+//     } else {
+//         printf("RK_MPI_VI_SetDevAttr already\n");
+//     }
+//     // 1.get  dev enable status
+//     s32Ret = RK_MPI_VI_GetDevIsEnable(VI_DEV_ID);
+//     if (s32Ret != RK_SUCCESS) {
+//         // 1-2.enable dev
+//         s32Ret = RK_MPI_VI_EnableDev(VI_DEV_ID);
+//         if (s32Ret != RK_SUCCESS) {
+//             printf("RK_MPI_VI_EnableDev %x\n", s32Ret);
+//             goto __FAILED;
+//         }
+//         // 1-3.bind dev/pipe
+//         stBindPipe.u32Num = 1;
+//         stBindPipe.PipeId[0] = VI_PIP_ID;
+//         s32Ret = RK_MPI_VI_SetDevBindPipe(VI_DEV_ID, &stBindPipe);
+//         if (s32Ret != RK_SUCCESS) {
+//             printf("RK_MPI_VI_SetDevBindPipe %x", s32Ret);
+//             goto __FAILED;
+//         }
+//     } else {
+//         printf("RK_MPI_VI_EnableDev already\n");
+//     }
+//     // 2.config channel
+//     stChnAttr.stIspOpt.u32BufCount = 2;
+//     stChnAttr.stIspOpt.enMemoryType = VI_V4L2_MEMORY_TYPE_DMABUF;
+//     stChnAttr.stSize.u32Width = VI_W;
+//     stChnAttr.stSize.u32Height = VI_H;
+//     stChnAttr.enPixelFormat = RK_FMT_YUV420SP;
+//     stChnAttr.enCompressMode = COMPRESS_MODE_NONE;
+//     stChnAttr.stFrameRate.s32DstFrameRate = 30;
+//     stChnAttr.stFrameRate.s32SrcFrameRate = 30;
+//     stChnAttr.u32Depth = 2;
+//     s32Ret = RK_MPI_VI_SetChnAttr(VI_PIP_ID, VI_CHN_ID, &stChnAttr);
+//     if (s32Ret != RK_SUCCESS) {
+//         printf("RK_MPI_VI_SetChnAttr %x\n", s32Ret);
+//         goto __FAILED;
+//     }
+//
+//     // 3.enable channel
+//     s32Ret = RK_MPI_VI_EnableChn(VI_PIP_ID, VI_CHN_ID);
+//     if (s32Ret != RK_SUCCESS) {
+//         printf("RK_MPI_VI_EnableChn %x\n", s32Ret);
+//         goto __FAILED;
+//     }
+//
+//
+// __FAILED:
+//     return s32Ret;
 }
 
 int voInit() {
@@ -228,7 +301,7 @@ int main(int argc, char *argv[]) {
     printf("sys init finish\n");
 
     s32Ret = viInit();
-    if (s32Ret != RK_SUCCESS) {
+    if (s32Ret != 0) {
         printf("vi %d:%d init failed:%x \n", VI_DEV_ID, VI_CHN_ID, s32Ret);
         goto __FAILED;
     }
